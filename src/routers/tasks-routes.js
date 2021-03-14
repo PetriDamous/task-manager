@@ -5,9 +5,8 @@ const router = new express.Router();
 
 // Task routes
 router.post('/tasks', async (req, res) => {
-    const task = new Task(req.body);
-
     try {
+        const task = new Task(req.body);
         await task.save();
         res.status(201).send(task);
     } catch (e) {
@@ -46,11 +45,17 @@ router.patch('/tasks/:id', async (req, res) => {
     if (!isValidUpdate) return res.status(404).send({error: 'Invalid update parameters.'});
 
     try {
-        const taskUpdate = await Task.findByIdAndUpdate(_id, body, {new: true, runValidators: true});
-        
-        if (!taskUpdate) return res.status(404).send({error: 'Task cannot be found.'});
+        // const taskUpdate = await Task.findByIdAndUpdate(_id, body, {new: true, runValidators: true});
 
-        res.status(202).send(taskUpdate);
+        const task = await Task.findById(_id);        
+        
+        if (!task) return res.status(404).send({error: 'Task cannot be found.'});
+
+        updates.forEach((update) => task[update] = body[update]);
+
+        await task.save();
+
+        res.status(202).send(task);
     } catch (e) {
         res.status(400).send(e);
     }
