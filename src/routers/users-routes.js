@@ -1,5 +1,6 @@
 const express = require('express');
-const User = require('../models/users');
+const {User} = require('../models/users');
+const auth = require('../middleware/auth');
 
 const router = new express.Router();
 
@@ -7,20 +8,29 @@ const router = new express.Router();
 router.post('/users', async (req, res) => {
     try {
         const user = new User(req.body);
-        await user.save();
-        res.status(201).send(user);
+        const token = await user.generateAuthToken();        
+        res.status(201).send({user, token});
     } catch (e) {
         res.status(400).send(`Error: ${e}`);
     }
 });
 
-router.get('/users', async (req, res) => {
+router.post('/users/login', async (req, res) => {   
+
     try {
-        const users = await User.find({});
-        res.send(users);
+        const {body: {email, password}} = req;
+        const user = await User.findByCredentials(email, password);
+        const token = await user.generateAuthToken();
+
+        res.send({user, token});
     } catch (e) {
-        res.status(500).send(`Error: ${e}`);
+        res.status(400).send({error: 'Incorrect user name or password'});
     }
+
+});
+
+router.get('/users', auth, async (req, res) => {
+    res.send(req.user);
 });
 
 router.get('/users/:id', async (req, res) => {
@@ -44,18 +54,12 @@ router.patch('/users/:id', async (req, res) => {
     if (!isUpdateValid) return res.status(400).send({error: 'Invalid update parameters'});
 
     try {
-        // const userUpdate = await User.findByIdAndUpdate(_id, body, {new: true, runValidators: true});
-        const user = await User.findById(_id);
+        const user = await User.findByIdAndUpdate(_id, body, {new: true, runValidators: true});
 
         if (!user) return res.status(404).send({error: 'user not found'});
 
-        updates.forEach((update) => user[update] = body[update]);
-
-        await user.save();        
-
         res.status(202).send(user);
     } catch (e) {
-        console.log(e)
         res.status(400).send(e);
     }
 });

@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const {isEmail, isStrongPassword} = require('validator');
 const bycrpt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const secretPhrase = 'ilikebigbuttsandicannotlie';
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -20,6 +23,7 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
+        unique: true,
         lowercase: true,
         trim: true,
         validate(value) {
@@ -47,8 +51,43 @@ const userSchema = new mongoose.Schema({
                 throw new Error('Password must be 8 charaters long and contain at least 1 lowercase character, uppercase character, 1 number, and 1 symbol (example: !@#$%^&*).');
             }
         }
-    }
+    },
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+
+    }]
 });
+
+userSchema.methods.generateAuthToken = async function() {
+    const user = this;
+
+    const {_id} = user;    
+
+    const token = jwt.sign({_id: _id.toString()}, secretPhrase);
+
+    user.tokens = [...user.tokens, {token}];
+
+    await user.save();
+
+    return token;
+};
+
+userSchema.statics.findByCredentials = async (email, password) => {
+    const errorMessage = 'Incorrect user name or password';
+
+    const user = await User.findOne({email});
+
+    if (!user) throw new Error(errorMessage);
+
+    const isPasswordMatch = await bycrpt.compare(password, user.password);
+
+    if (!isPasswordMatch) throw new Error(errorMessage);
+
+    return user;
+};
 
 userSchema.pre('save', async function(next) {
     const user = this;
@@ -62,4 +101,8 @@ userSchema.pre('save', async function(next) {
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+module.exports = {
+    User: User,
+    secretPhrase: secretPhrase
+
+};
