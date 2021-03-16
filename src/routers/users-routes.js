@@ -29,7 +29,11 @@ router.post('/users/login', async (req, res) => {
 
 });
 
-router.get('/users', auth, async (req, res) => {
+router.post('/users/logout', (req, res) => {
+    res.send('fuck you')
+});
+
+router.get('/users/me', auth, async (req, res) => {
     res.send(req.user);
 });
 

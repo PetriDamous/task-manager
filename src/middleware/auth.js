@@ -6,23 +6,17 @@ const auth = async (req, res, next) => {
     try {
 
         const token = req.header('Authorization').slice(7);
+
+        const decoded = jwt.verify(token, secretPhrase);
     
-        const verifiedToken = jwt.verify(token, secretPhrase);
-    
-        const {_id} = verifiedToken;
+        const {_id} = decoded;
 
-        console.log(_id)
+        const user = await User.findOne({_id, 'tokens.token': token});
 
-        const verifiedUser = await User.findOne({_id, "tokens:token": token});
+        if (!user) throw new Error();
 
-        console.log(verifiedUser)
-
-        if (!verifiedUser) throw new Error();
-
-        req.user = verifiedUser;
-    
-    
-        // console.log(token)
+        req.user = user;
+        req.token = token;
     
         next();
     } catch (e) {
