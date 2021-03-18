@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const auth = async (req, res, next) => {
 
     try {
-
         const token = req.header('Authorization').slice(7);
 
         const decoded = jwt.verify(token, secretPhrase);
@@ -20,9 +19,10 @@ const auth = async (req, res, next) => {
     
         next();
     } catch (e) {
+        console.log(e)
         res.status(401).send();
     }
 
-}
+};
 
 module.exports = auth;
