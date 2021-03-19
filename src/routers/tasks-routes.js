@@ -1,13 +1,13 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const Task = require('../models/tasks');
+const {isEmptyObj} = require('../utility/utility');
 
 const router = new express.Router();
 
 // Task routes
 router.post('/tasks', auth, async (req, res) => {
     const {user: {_id}, body} = req;
-    console.log(_id, body)
     
     try {        
         const task = new Task({
@@ -21,12 +21,34 @@ router.post('/tasks', auth, async (req, res) => {
     }
 });
 
+
+// /tasks?sortBy=completed_desc
 router.get('/tasks', auth, async (req, res) => {
-    const {user} = req;
-    console.log(user)
+    const {user, query} = req;
+
+    const match = {};
+    const sort = {};
+
+    if (query.completed) {
+        match.completed = Boolean(query.completed) === true;
+    }
+
+    if (query.sortBy) {
+        const [field, option] = query.sortBy.split('_');
+        sort[field] = option === 'desc' ? -1 : 1;
+    }
 
     try {
-        await user.populate('tasks').execPopulate();
+        await user.populate({
+            path: 'tasks',
+            match,
+            options: {
+                limit: parseInt(query.limit),
+                skip: parseInt(query.skip),
+                sort
+            }
+  
+        }).execPopulate();
         res.send(user.tasks);
     } catch (e) {
         res.status(500).send(e);
@@ -76,7 +98,6 @@ router.delete('/tasks/:id', auth, async (req, res) => {
 
     try {
         const taskDelete = await Task.findOneAndDelete({_id, owner});
-        console.log(taskDelete)
 
         if (!taskDelete) return res.status(404).send({error: 'task cannot be found'});
 
