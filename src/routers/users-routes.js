@@ -1,6 +1,7 @@
 const express = require('express');
 const {User} = require('../models/users');
 const auth = require('../middleware/auth');
+const multer = require('multer');
 
 const router = new express.Router();
 
@@ -89,6 +90,51 @@ router.delete('/users/me', auth, async (req, res) => {
     } catch (e) {
         res.status(500).send();
     }
+});
+
+const upload = multer({
+    limits: {
+        fileSize: 1000000
+    },
+    fileFilter(req, file, cb) {
+        const {originalname: ogName} = file;
+        if (ogName.match(/\.(png|jpeg|jpg)$/)) return cb(undefined, true);
+        cb(new Error('Please upload a file with the extention .jpg, jpeg, or png'));
+    }
+});
+
+router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+    const {user, file} = req;
+    user.avatar = file.buffer;
+    await user.save();
+    res.send();
+}, (error, req, res, next) => {
+    res.status(400).send({error: error.message})
+});
+
+router.delete('/users/me/avatar', auth, async (req, res) => {
+    const {user} = req;
+    user.avatar = undefined;
+    await user.save();
+    res.send();
+});
+
+router.get('/users/:id/avatar', async (req, res) => {
+    const {params: {id}} = req;
+
+    try {
+        const user = await User.findById(id);
+
+        if (!user || !user.avatar) throw new Error('Cannot find user info.');
+
+        res.set('Content-Type', 'image/jpg');
+
+        res.send(user.avatar);
+
+    } catch (e) {
+        res.status(400).send({error: e.message});
+    }
+    
 });
 
 module.exports = router;
