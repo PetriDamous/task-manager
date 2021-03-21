@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const {isEmail, isStrongPassword} = require('validator');
 const bycrpt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const sharp = require('sharp');
 const Task = require('../models/tasks');
 
 const secretPhrase = 'ilikebigbuttsandicannotlie';
@@ -80,6 +81,7 @@ userSchema.methods.toJSON = function() {
 
     delete userObject.tokens;
     delete userObject.password;
+    delete userObject.avatar;
 
     return userObject;
 };
