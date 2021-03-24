@@ -2,10 +2,7 @@ const mongoose = require('mongoose');
 const {isEmail, isStrongPassword} = require('validator');
 const bycrpt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const sharp = require('sharp');
 const Task = require('../models/tasks');
-
-const secretPhrase = 'ilikebigbuttsandicannotlie';
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -91,7 +88,7 @@ userSchema.methods.generateAuthToken = async function() {
 
     const {_id} = user;    
 
-    const token = jwt.sign({_id: _id.toString()}, secretPhrase);
+    const token = jwt.sign({_id: _id.toString()}, process.env.JWT_SECRET);
 
     user.tokens = [...user.tokens, {token}];
 
@@ -134,8 +131,4 @@ userSchema.pre('remove', async function(next) {
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = {
-    User: User,
-    secretPhrase: secretPhrase
-
-};
+module.exports = User;

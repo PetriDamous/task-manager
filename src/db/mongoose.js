@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const dbUrl = 'mongodb://127.0.0.1:27017/task-manger-api';
+const dbUrl = process.env.MONGODB_URL;
 
 mongoose.connect(dbUrl, {
     useNewUrlParser: true,
