@@ -1,7 +1,6 @@
-const { createTransport} = require("nodemailer");
-const sendEmail = require('../../src/emails/account');
+const {createTransport}= require("nodemailer");
+
 
 module.exports = {
-    createTransport,
-    sendEmail
+    createTransport
 };

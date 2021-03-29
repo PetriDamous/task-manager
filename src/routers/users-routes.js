@@ -9,7 +9,6 @@ const router = new express.Router();
 
 // User routes
 router.post('/users', async (req, res) => {
-    console.log(req.method)
     try {
         const user = new User(req.body);
         const token = await user.generateAuthToken();
@@ -80,9 +79,9 @@ router.patch('/users/me', auth, async (req, res) => {
     try {
         const user = await User.findByIdAndUpdate(_id, body, {new: true, runValidators: true});
 
-        res.status(202).send(user);
+        res.send(user);
     } catch (e) {
-        res.status(400).send(e);
+        res.status(400).send({error: e.message});
     }
 });
 
